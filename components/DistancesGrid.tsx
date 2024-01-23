@@ -1,4 +1,5 @@
-"use client";
+"use server";
+
 import React from 'react';
 
 export interface Distance {
@@ -7,18 +8,14 @@ export interface Distance {
   distance: number
 }
 
-export interface DistancesResult {
+export interface APIResult {
   distances: Distance[];
 }
 
-export function DistancesGrid({ distances }: DistancesResult) {
-  // Extract unique words from the distances array
+export async function DistancesGrid({ distances }: APIResult) {
   const words = Array.from(new Set(distances.flatMap(d => [d.word1, d.word2])));
-
-  // Create a map for easy access to distance values
   const distanceMap = new Map(distances.map(d => [`${d.word1}-${d.word2}`, d.distance]));
 
-  // Function to get the distance for a pair of words
   const getDistance = (word1: string, word2: string) => {
     return distanceMap.get(`${word1}-${word2}`) || distanceMap.get(`${word2}-${word1}`);
   };
@@ -27,17 +24,8 @@ export function DistancesGrid({ distances }: DistancesResult) {
   const maxDistance = Math.max(...distances.map(d => d.distance)); // The maximum distance
 
   const getCellColor = (distance: number) => {
-    const minOpacity = 0; // 12%
-    const maxOpacity = 1;    // 100%
-    
-    // Normalize the distance to a value between 0 and 1
     const normalizedDistance = (distance - minDistance) / (maxDistance - minDistance);
-    
-    // Then scale that value to the opacity range
-    const opacity = (normalizedDistance * (maxOpacity - minOpacity)) + minOpacity;
-    const opacityPercentage = (opacity * 100).toFixed(0); // Convert to percentage and round
-    
-    return `rgba(0, 128, 0, ${opacity})`; // Green with scaled opacity
+    return `rgba(0, 128, 0, ${normalizedDistance})`; // Green with scaled opacity
   };
 
   const maxLengthWord = words.reduce((longest, word) => longest.length > word.length ? longest : word, '');
@@ -50,7 +38,8 @@ export function DistancesGrid({ distances }: DistancesResult) {
       gridAutoRows: columnWidth,
       gap: '0',
       padding: '12px',
-      fontSize: '0.69rem'
+      fontSize: '0.69rem',
+      userSelect: "none",
     }}>
 
       {/* Rows. */}
@@ -64,7 +53,7 @@ export function DistancesGrid({ distances }: DistancesResult) {
           {words.map((word2, colIndex) => {
             const distance = getDistance(word1, word2);
             const isSelf = distance === undefined;
-            const percent = isSelf ? `0%` : (100 * distance).toFixed(1);
+            const score = isSelf ? `0%` : (100 * distance).toFixed(1);
 
             return (
               <div 
@@ -78,7 +67,7 @@ export function DistancesGrid({ distances }: DistancesResult) {
                   border: '1px solid black', // Optional border for clear cell separation
                 }}
               >
-                {isSelf ? '' : percent}
+                {isSelf ? '' : score}
               </div>
             );
           })}

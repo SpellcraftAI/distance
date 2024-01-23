@@ -1,16 +1,16 @@
-import { NextRequest } from "next/server"
+import { APIResult } from "@/components/DistancesGrid";
 
-export const runtime = "edge"
+export async function getDistances(words: string[]): Promise<APIResult> {
+  "use server";
 
-export async function POST(req: NextRequest) {
-  const { words } = await req.json()
   const blob = new Blob([JSON.stringify({ words })], { type: 'application/json' })
-
-  return await fetch(
+  const response = await fetch(
     "https://us-central1-eng-cogency-412015.cloudfunctions.net/cross-distance",
     {
       method: "POST",
       body: blob,
     }
   )
+
+  return await response.json();
 }
